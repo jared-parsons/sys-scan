@@ -12,6 +12,36 @@ STOP
 	}
 }
 
+sub find_toplevel_dependency_packages {
+	my @packages = `pacman -Qqdt`;
+	my $result = $? >> 8;
+	($result == 0 or $result == 1) or die "Failed running pacman.\n";
+	for my $package (@packages) {
+		chomp $package;
+		print "Package $package was installed as a dependency but is no longer needed by any package.\n";
+	}
+}
+
+sub find_foreign_packages {
+	my @packages = `pacman -Qqm`;
+	my $result = $? >> 8;
+	($result == 0 or $result == 1) or die "Failed running pacman.\n";
+	for my $package (@packages) {
+		chomp $package;
+		print "Package $package was not found in the sync database.\n";
+	}
+}
+
+sub find_out_of_date_packages {
+	my @packages = `pacman -Qqu`;
+	my $result = $? >> 8;
+	($result == 0 or $result == 1) or die "Failed running pacman.\n";
+	for my $package (@packages) {
+		chomp $package;
+		print "Package $package is out of date.\n";
+	}
+}
+
 sub scan_directory {
 	my ($directory, $package_database) = @_;
 
@@ -42,6 +72,13 @@ sub read_package_database {
 
 sub main {
 	verify_version;
+
+	find_toplevel_dependency_packages();
+
+	find_foreign_packages();
+
+	find_out_of_date_packages();
+
 	my @directories = ('/boot', '/etc', '/mnt', '/opt', '/usr');
 
 	my $package_database = read_package_database();
