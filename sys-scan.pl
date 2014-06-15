@@ -1,6 +1,7 @@
 #!/usr/bin/perl
 
 use File::Find;
+use Getopt::Long qw(:config gnu_getopt);
 
 sub verify_version {
 	unless (-e '/etc/arch-release') {
@@ -9,6 +10,21 @@ Operating system is not supported. Supported operating systems are:
 - Arch Linux
 STOP
 		exit 1;
+	}
+}
+
+my $packages = 0;
+my $files = 0;
+
+sub process_options {
+	GetOptions(
+		"packages" => \$packages,
+		"files" => \$files
+	) or die "Failed processing options\n";
+
+	if (!$packages and !$files) {
+		$packages = 1;
+		$files = 1;
 	}
 }
 
@@ -73,18 +89,24 @@ sub read_package_database {
 sub main {
 	verify_version;
 
-	find_toplevel_dependency_packages();
+	process_options;
 
-	find_foreign_packages();
+	if ($packages) {
+		find_toplevel_dependency_packages();
 
-	find_out_of_date_packages();
+		find_foreign_packages();
 
-	my @directories = ('/boot', '/etc', '/mnt', '/opt', '/usr');
+		find_out_of_date_packages();
+	}
 
-	my $package_database = read_package_database();
+	if ($files) {
+		my @directories = ('/boot', '/etc', '/mnt', '/opt', '/usr');
 
-	for my $directory (@directories) {
-		scan_directory($directory, $package_database);
+		my $package_database = read_package_database();
+
+		for my $directory (@directories) {
+			scan_directory($directory, $package_database);
+		}
 	}
 }
 
