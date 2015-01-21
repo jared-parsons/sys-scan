@@ -5,6 +5,8 @@
 use File::Find;
 use Getopt::Long qw(:config gnu_getopt);
 
+my $packageDirectory = "/var/cache/pacman/pkg";
+
 sub verify_version {
 	unless (-e '/etc/arch-release') {
 		warn <<"STOP";
@@ -17,19 +19,25 @@ STOP
 
 my $packages = 0;
 my $files = 0;
+my $untrackedFiles = 0;
 
 sub process_options {
 	GetOptions(
 		"packages" => \$packages,
-		"files" => \$files
+		"files" => \$files,
+		"untracked-files" => \$untrackedFiles,
 	) or die "Failed processing options\n";
 
-	if (!$packages and !$files) {
+	if (!$packages and !$files and !$untrackedFiles) {
+		# No options were specified. Use the defaults.
 		$packages = 1;
 		$files = 1;
 	}
 }
 
+############
+# Packages #
+############
 sub find_toplevel_dependency_packages {
 	my @packages = `pacman -Qqdt`;
 	my $result = $? >> 8;
@@ -60,6 +68,19 @@ sub find_out_of_date_packages {
 	}
 }
 
+#########
+# Files #
+#########
+sub find_partially_downloaded_packages {
+	my @files = glob "$packageDirectory/*.part";
+	for my $file (@files) {
+		print "File $file did not finish downloading.\n";
+	}
+}
+
+###################
+# Untracked Files #
+###################
 sub scan_directory {
 	my ($directory, $package_database) = @_;
 
@@ -102,6 +123,10 @@ sub main {
 	}
 
 	if ($files) {
+		find_partially_downloaded_packages();
+	}
+
+	if ($untrackedFiles) {
 		# The following are ignored, because they are just symlinks to directories inside /usr:
 		#   bin
 		#   lib
