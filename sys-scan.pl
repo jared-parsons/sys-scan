@@ -78,10 +78,22 @@ sub find_partially_downloaded_packages {
 	}
 }
 
+sub find_config_files {
+	my ($directory) = @_;
+
+	find({wanted => sub {
+		if ($_ =~ m/.*\.pacnew/) {
+			print "File $_ is a new configuration file.\n";
+		} elsif ($_ =~ m/.*\.pacsave/ or $_ =~ m/.*\.pacorig/) {
+			print "File $_ is a configuration file from a removed package.\n";
+		}
+	}, no_chdir => 1}, $directory);
+}
+
 ###################
 # Untracked Files #
 ###################
-sub scan_directory {
+sub scan_directory_for_untracked_files {
 	my ($directory, $package_database) = @_;
 
 	find({wanted => sub {
@@ -124,6 +136,8 @@ sub main {
 
 	if ($files) {
 		find_partially_downloaded_packages();
+
+		find_config_files('/etc');
 	}
 
 	if ($untrackedFiles) {
@@ -157,7 +171,7 @@ sub main {
 		my $package_database = read_package_database();
 
 		for my $directory (@directories) {
-			scan_directory($directory, $package_database);
+			scan_directory_for_untracked_files($directory, $package_database);
 		}
 	}
 }
