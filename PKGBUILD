@@ -1,5 +1,5 @@
 pkgname=sys-scan
-pkgver=0.1
+pkgver=0.2
 pkgrel=1
 pkgdesc="System Scanner"
 arch=('any')
@@ -7,7 +7,7 @@ url="http://jaredparsons.com/"
 license=('BSD')
 depends=('perl')
 source=(${pkgname}.pl)
-sha256sums=('472e3cf4692035c8d207ba75c549780b72bca6dd9bccbbc1b1c06747a111418b')
+sha256sums=('51ea02aa9f37c3437074ef7ad8891f174fe9f183b721946adc89ccf2062ae510')
 
 package() {
   cd "$srcdir"
